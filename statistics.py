@@ -3,6 +3,7 @@ from sklearn.metrics import confusion_matrix
 import itertools
 import operator
 import matplotlib.pyplot as plt
+import re
 
 class processTags:
 	def __init__(self,resultfile):
@@ -10,11 +11,14 @@ class processTags:
 		self.contents = filehandle.read().strip()
 		self.words = [mappings.split('_')[0] for mappings in self.contents.split(' ')]
 		self.tags = [mappings.split('_')[1] for mappings in self.contents.split(' ')]
+		self.mintags = [re.sub("(-HL)|(-TL)|(-NC)|(FW-)", "", x) for x in self.tags]
 		self.wordset = list(set(self.words))
 		self.tagset = list(set(self.tags))
+		self.mintagset = list(set(self.mintags))
 		self.wordset.sort()
 		self.tagset.sort()
-	
+		self.mintagset.sort()
+
 	def getPredictedTags(self):
 		return self.tags
 

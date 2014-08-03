@@ -8,3 +8,12 @@ The resultfile parameter passed should be the output file after tagging the inpu
 // to get the precision/recall of the tagged output
 4. acc.confusion_matrix()
 // to generate the confusion matrix on the tagged output
+
+trigram module:
+1. from trigram import trigramStats
+2. trigramProbab = new trigramStats('brown.txt')
+// pass the corpus. Transition and Emission probabilities will be calculated into tables
+3. trigramProbab.getTransitionProbability(tag1,tag2,tag3) 
+// this returns the probability of occurance of tag3 , having already seen tag1 and tag2 consecutively
+4. trigramProbab.getEmissionProbability(tag1,tag2,word)
+// this returns the probability of occurance of a word having already seen tag1 and tag2 consecutively
