@@ -3,7 +3,7 @@
 ### POS Tagger / Assignment 1 ###
 
 * POS tagger for CS 626 - Natural Language Processing
-
+  
 **how to use statistics module:**  
 ***1.*** from statistics import accuracy  
 ***2.*** acc = accuracy('resultfile.txt').  
@@ -20,5 +20,4 @@ The resultfile parameter passed should be the output file after tagging the inpu
 ***3.*** trigramProbab.getTransitionProbability(tag1,tag2,tag3)  
 // this returns the probability of occurance of tag3 , having already seen tag1 and tag2 consecutively  
 ***4.*** trigramProbab.getEmissionProbability(tag1,tag2,word)  
-// this returns the probability of occurance of a word having already seen tag1 and tag2 consecutively  
-  
+// this returns the probability of occurance of a word having already seen tag1 and tag2 consecutively
