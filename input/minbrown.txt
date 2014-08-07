@@ -1,0 +1,1 @@
+The_AT Fulton_NP-TL County_NN-TL Grand_JJ-TL Jury_NN-TL said_VBD ._. A_AT boy_NN fell_VBD ._. The_AT beautiful_JJ girl_NN sang_VBD ._. The_AT boy_NN loves_VBD Aston_NP Martin_NP ._. A_AT satellite_NN reached_VBD_Mars_NP ._.
