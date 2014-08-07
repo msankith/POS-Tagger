@@ -18,11 +18,11 @@ class trigramStats:
 
 	def tagTransitionProbabilities(self):
 		self.transitionProbabilities = AutoVivification()
-		for t1 in self.parsed.tagset:
-			for t2 in self.parsed.tagset:
-				for t3 in self.parsed.tagset:
+		for t1 in self.parsed.actual_tagset:
+			for t2 in self.parsed.actual_tagset:
+				for t3 in self.parsed.actual_tagset:
 					self.transitionProbabilities[(t1,t2)][t3]=0					
-		for t1,t2,t3 in itertools.izip(self.parsed.tags,self.parsed.tags[1:],self.parsed.tags[2:]):
+		for t1,t2,t3 in itertools.izip(self.parsed.actual_tags,self.parsed.actual_tags[1:],self.parsed.actual_tags[2:]):
 			self.transitionProbabilities[(t1,t2)][t3]+=1
 		self.transitionCounts = copy.deepcopy(self.transitionProbabilities)
 		#At this point, we just have the counts, not the probabilities. So this assignment is fine.
@@ -34,11 +34,11 @@ class trigramStats:
 
 	def findEmissionProbabilities(self):
 		self.emissionProbabilities = AutoVivification()
-		for t1 in self.parsed.tagset:
-			for t2 in self.parsed.tagset:
-				for w in self.parsed.wordset:
+		for t1 in self.parsed.actual_tagset:
+			for t2 in self.parsed.actual_tagset:
+				for w in self.parsed.actual_wordset:
 					self.emissionProbabilities[(t1,t2)][w]=0					
-		for t1,t2,w in itertools.izip(self.parsed.tags,self.parsed.tags[1:],self.parsed.words[1:]):
+		for t1,t2,w in itertools.izip(self.parsed.actual_tags,self.parsed.actual_tags[1:],self.parsed.actual_words[1:]):
 			self.emissionProbabilities[(t1,t2)][w]+=1
 		self.emissionCounts = copy.deepcopy(self.emissionProbabilities)
 		for t1,w in self.emissionProbabilities.iteritems():
@@ -52,3 +52,7 @@ class trigramStats:
 
 	def getEmissionProbability(self,t1,t2,w):
 		return self.emissionProbabilities[(t1,t2)][w]
+
+def trigram_trainer(corpusfile):
+	trigramprobab = trigramStats(corpusfile)
+	return trigramprobab.transitionProbabilities, trigramprobab.emissionProbabilities

@@ -1,9 +1,19 @@
 from createMatrices import bigram_trainer
 from trigram import trigram_trainer
-from validation import wordsfromtest
 from statistics import accuracy
 from statistics import csv_reports
+from statistics import processTags
 from sys import argv
+
+def getfilecontents(filename):
+        fh = open(filename,'r')
+        contents = fh.read().strip()
+        return contents
+
+def wordsfromtest(inputfile):
+        c = getfilecontents(inputfile)
+        words = c.split(' ')
+        return words
 
 corpusfile = argv[1]
 inputfile = argv[2]
@@ -20,7 +30,7 @@ words = wordsfromtest(inputfile)
 # Step 3 - Pass the word list and matrices to viterbi implementation
 #prediction = viterbi(words,transition,emission)
 
-prediction = "kfold/base1.txt"
+prediction = 'input/base.txt' # just for testing this code without viterbi; to be removed after viterbi completed
 
 ''' 
 viterbi() should return the PATH of the output file. 
