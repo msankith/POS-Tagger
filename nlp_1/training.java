@@ -27,24 +27,32 @@ import java.util.logging.Logger;
 public class training {
     
     File Corpus;
-    public HashMap<String,Integer> TagSet,TagTransistionCount,wordCount;
-    public HashMap<String,Double> TransistionProbabilty,wordProbability;
+    public HashMap<String,Integer> TagSet,TagTransitionCount,wordCount, transitionSingletons, emissionSingletons;
+    public HashMap<String,Double> TransistionProbabilty,wordProbability, transitionBackoff, emissionBackoff;
     HashMap<String,Integer> wordSet;
-    
+    int total;
+    int vocab;
+    int doGoodTuring = 1;
     
     training(String Corpus){
         
         this.Corpus=new File(Corpus);
         TagSet=new HashMap<String,Integer>();
-        TagTransistionCount=new HashMap<String,Integer>();
+        TagTransitionCount=new HashMap<String,Integer>();
         TransistionProbabilty = new HashMap<String,Double>();
+        transitionBackoff = new HashMap<String,Double>();
+        emissionBackoff = new HashMap<String,Double>();
         wordProbability= new HashMap<String,Double>();
         wordCount = new HashMap<String,Integer>();
         wordSet=new HashMap<String,Integer>();
+        transitionSingletons = new HashMap<String,Integer>();
+        emissionSingletons = new HashMap<String,Integer>();   
     }
-    
+   
     void parseFile()
     {
+        int singleCount;
+        
         try {
             BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(Corpus)));
             
@@ -54,12 +62,22 @@ public class training {
             {
                 String[] words_tag=line.split("\\s+");
                 System.out.println("Total data count in corpus  "+ words_tag.length);
+                total = words_tag.length;
                 String history=new String(".");
+                
+                if(!transitionSingletons.containsKey(history)){
+                        transitionSingletons.put(history, 0);
+                }
+                
+                if(!emissionSingletons.containsKey(history)){
+                        emissionSingletons.put(history, 0);
+                }
+                
                 for(String str : words_tag)
                 {
                     String[] tagSplit = str.split("_");
-                    tagSplit[1]=tagSplit[1].replaceAll("(-HL)|(-TL)|(-NC)|(FW-)", "");
-  //                  tagSplit[1]=tagSplit[1].replaceAll("(-[A-Z]+)|(\\+[A-Z]+)|\\*|\\$", "");
+                    //tagSplit[1]=tagSplit[1].replaceAll("(-HL)|(-TL)|(-NC)|(FW-)", "");
+                    tagSplit[1]=tagSplit[1].replaceAll("(-[A-Z]+)|(\\+[A-Z]+)|\\*|\\$", "");
                     
                   //  System.out.print(tagSplit[0]+" ");
                     //System.out.println(str+"    "+tagSplit[0]+" -> "+tagSplit[1]);
@@ -67,16 +85,49 @@ public class training {
                     int count=TagSet.containsKey(tagSplit[1])?TagSet.get(tagSplit[1]):0;
                     TagSet.put(tagSplit[1],count+1);
                     
-                    count=TagTransistionCount.containsKey(history+"_"+tagSplit[1])?TagTransistionCount.get(history+"_"+tagSplit[1]):0;
-                    TagTransistionCount.put(history+"_"+tagSplit[1],count+1);
+                    if(!transitionSingletons.containsKey(tagSplit[1])){
+                        transitionSingletons.put(tagSplit[1], 0);
+                    }
+                    
+                    if(!emissionSingletons.containsKey(tagSplit[1])){
+                        emissionSingletons.put(tagSplit[1], 0);
+                    }
+                    
+                    count=TagTransitionCount.containsKey(history+"_"+tagSplit[1])?TagTransitionCount.get(history+"_"+tagSplit[1]):0;
+                    
+                    if(count == 0){
+                        singleCount = transitionSingletons.get(history);
+                        transitionSingletons.put(history, singleCount+1);
+                    }
+                    if(count == 1){
+                        singleCount = transitionSingletons.get(history);
+                        transitionSingletons.put(history, singleCount-1);
+                    }
+                    
+                    TagTransitionCount.put(history+"_"+tagSplit[1],count+1);
                     history=tagSplit[1];
                     
                     count=wordCount.containsKey(tagSplit[0]+"_"+tagSplit[1])?wordCount.get(tagSplit[0]+"_"+tagSplit[1]):0;
+                    
+                    if(count == 0){
+                        singleCount = emissionSingletons.get(tagSplit[1]);
+                        emissionSingletons.put(tagSplit[1], singleCount+1);
+                    }
+                    
+                    if(count == 1){
+                        singleCount = emissionSingletons.get(tagSplit[1]);
+                        emissionSingletons.put(tagSplit[1], singleCount-1);
+                    }
+                    
                     wordCount.put(tagSplit[0]+"_"+tagSplit[1],count+1);
                     
-                    wordSet.put(tagSplit[0],0);
+                    count=wordSet.containsKey(tagSplit[0])?wordSet.get(tagSplit[0]):0;
+                    wordSet.put(tagSplit[0],count+1);
                 }
             }
+            vocab = wordSet.size();
+            emissionBackOff();
+            transitionBackOff();
             getTransisitionMatrix();
             getEmissionProbability();
         } 
@@ -92,7 +143,8 @@ public class training {
     
     void getTransisitionMatrix() throws IOException
     {
-        
+        double backoff;
+        int singletons;
         File file = new File("Transistion.csv");
             
         if (!file.exists()) {
@@ -133,11 +185,14 @@ public class training {
                 Map.Entry colnPair = (Map.Entry)coln.next();
                 String colnTag=(String) colnPair.getKey();
                 int colnValue=(int) colnPair.getValue();
-                int count=TagTransistionCount.containsKey(rowTag+"_"+colnTag)?TagTransistionCount.get(rowTag+"_"+colnTag):0;
+                int count=TagTransitionCount.containsKey(rowTag+"_"+colnTag)?TagTransitionCount.get(rowTag+"_"+colnTag):0;
                 double f=(float)0;
                 if(count!=0)
                 {
-                    f=new Double((double)count/(double)rowValue);
+                    backoff = transitionBackoff.get(colnTag);
+                    singletons = transitionSingletons.get(rowTag);
+                    
+                    f=new Double( ((double)count + ( singletons*backoff*doGoodTuring ))/ ( (double)rowValue + (singletons*doGoodTuring ) ) );
                     TransistionProbabilty.put(rowTag+"_"+colnTag,f);
                 //    System.out.println(rowTag+" _ "+colnTag +"  =  "+count);
                     total+=count;
@@ -155,7 +210,9 @@ public class training {
     void getEmissionProbability() throws IOException
     {
         File file = new File("Emission.csv");
-            
+        double backoff;
+        int singletons;
+        
         if (!file.exists()) {
             file.delete();
             file.createNewFile();
@@ -190,7 +247,10 @@ public class training {
             while(tag.hasNext()){
                 Map.Entry tagPair = (Map.Entry)tag.next();
                 String tagName = (String) tagPair.getKey();
-                double count=wordCount.containsKey(rowTag+"_"+tagName)?(double)wordCount.get(rowTag+"_"+tagName)/(double)TagSet.get(tagName):(double)0;
+                backoff = emissionBackoff.get(rowTag); // actually fetching by word. misleading variable name
+                singletons = emissionSingletons.get(tagName);
+                
+                double count=wordCount.containsKey(rowTag+"_"+tagName)?( (double)wordCount.get(rowTag+"_"+tagName) + (singletons*backoff*doGoodTuring) )/ ( (double)TagSet.get(tagName) + (singletons*doGoodTuring) ):(double)0;
                 bw.write(","+count);
                 
                 
@@ -209,6 +269,7 @@ public class training {
         
             bw.close();
     }
+    
     void getResult()
     {
         System.out.println("Tag count = "+TagSet.size());
@@ -248,4 +309,31 @@ public class training {
         }
        
     }
+    
+     
+    void transitionBackOff(){
+        Iterator tagIterator = TagSet.entrySet().iterator();
+        
+        while(tagIterator.hasNext()){
+            Map.Entry pair = (Map.Entry) tagIterator.next();
+            String tag = (String)pair.getKey();
+            int count = (int)pair.getValue();
+            
+            transitionBackoff.put(tag, (count*1.0)/total);
+        }
+    }
+    
+    void emissionBackOff(){
+        Iterator wordIterator = wordSet.entrySet().iterator();
+        
+        while(wordIterator.hasNext()){
+            Map.Entry pair = (Map.Entry) wordIterator.next();
+            String word = (String)pair.getKey();
+            int count = (int)pair.getValue();
+            
+            emissionBackoff.put(word, ((count*1.0)+1)/(total+vocab));
+        }
+    }
+    
+    
 }

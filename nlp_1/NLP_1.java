@@ -26,10 +26,10 @@ public class NLP_1 {
         BufferedWriter out=null;
         try {
             // TODO code application logic here
-            training data=new training("/home/sanjeevmk/NetBeansProjects/PosTagger/src/nlp_1/input/train2.txt");
+            training data=new training("/home/sanjeevmk/NetBeansProjects/PosTagger/src/nlp_1/input/train5.txt");
             data.parseFile();
-            out = new BufferedWriter(new FileWriter("/home/sanjeevmk/NetBeansProjects/PosTagger/src/nlp_1/input/output2.txt"));
-            Viterbi algo= new Viterbi("/home/sanjeevmk/NetBeansProjects/PosTagger/src/nlp_1/input/test2.txt", data,out);
+            out = new BufferedWriter(new FileWriter("/home/sanjeevmk/NetBeansProjects/PosTagger/src/nlp_1/input/output5_2.txt"));
+            Viterbi algo= new Viterbi("/home/sanjeevmk/NetBeansProjects/PosTagger/src/nlp_1/input/test5.txt", data,out);
             algo.parseFile();
             
             //  data.getResult();

@@ -187,10 +187,8 @@ public class Viterbi {
                 double emissionProb = EmissionMatrix.containsKey(word+"_"+parentTag)?(double) EmissionMatrix.get(word+"_"+parentTag):(double) 0;
                 
                 if(knownWord==false)
-                    emissionProb=1;
-                
+                    emissionProb=1;  
                   
-                    
                 Iterator tagIterator = TagSet.entrySet().iterator();
                 //tagProb.clear();//to clear prev prob
                 while(tagIterator.hasNext())
