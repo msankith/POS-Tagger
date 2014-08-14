@@ -26,9 +26,14 @@ import java.util.logging.Logger;
  *
  * @author msankith
  */
-public class Viterbi {
+public class Viterbi implements Runnable {
 
     StringBuilder bigOut = new StringBuilder();
+
+    @Override
+    public void run() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
     
     class tree {
         String tag;
@@ -96,7 +101,6 @@ public class Viterbi {
             String Words[] = line.split(" ");
             
             Viterbi_Algorithm2(Words);
-            
         }
         output.append(bigOut);
         
@@ -224,9 +228,7 @@ public class Viterbi {
                 maxTag = (String)tagPair.getKey();
             }
         }
-     //   System.out.println("last tag " + maxTag);
-      // System.out.println("max prob of HMM "+ maxProb);
-        
+     
         
         tree node = level2Tree.get(maxTag);
         
@@ -261,9 +263,6 @@ public class Viterbi {
                 //output.write(out);
              }
         }
-       // output.write("\n");
-            
-       
     }
     
     void printTrans()
