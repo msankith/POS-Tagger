@@ -19,6 +19,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
+import java.util.TreeMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -26,14 +30,29 @@ import java.util.logging.Logger;
  *
  * @author msankith
  */
-public class Viterbi implements Runnable {
+public class Viterbi implements Runnable{
 
     StringBuilder bigOut = new StringBuilder();
-
+    int perThread = 100;
+    
     @Override
     public void run() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        int index;
+        try {
+            
+            for(index=0; index<threadSet.size(); index++){
+                String[] words = threadSet.get(index).split(" ");
+                Viterbi_Algorithm2(words);
+            }
+            
+            pos_output.put(id, bigOut.toString());
+//            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        } catch (IOException ex) {
+            Logger.getLogger(Viterbi.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
+
+    
     
     class tree {
         String tag;
@@ -57,81 +76,105 @@ public class Viterbi implements Runnable {
  
     }
     
-    
-    String fileName;
-    HashMap<String,Integer> TagSet,WordSet;
-    HashMap<String,Double> TransistionMatrix,EmissionMatrix;
-    BufferedWriter output;
-    
-    Viterbi(String File,training t,BufferedWriter out)
+  String fileName;
+  static  HashMap<String,Integer> TagSet,WordSet;
+  static  HashMap<String,Double> TransistionMatrix,EmissionMatrix;
+  BufferedWriter output;
+  static  HashMap<Integer,String> pos_output= new HashMap<Integer,String>();
+  
+  int id;
+  ArrayList<String> threadSet = new ArrayList<String>();
+  ArrayList<ArrayList<String>> setOfSets = new ArrayList<ArrayList<String>>();
+  
+    public Viterbi(String File,training t,BufferedWriter out)
     {
         fileName=File;
         TagSet = t.TagSet;
         WordSet=t.wordSet;
         TransistionMatrix = t.TransistionProbabilty;
         EmissionMatrix= t.wordProbability;
-        output=out;
+        output = out;
     }
+
+    public Viterbi(int ID,ArrayList<String> lines) {
+        this.id=ID;
+        
+        this.threadSet = lines;
+    }
+    
+    
     
     void parseFile() throws IOException
     {
-        List<String> lines = new ArrayList<String>();
-        
         try {
-            BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(fileName)));
-            String line=null;
-           
-            
-            while((line=br.readLine())!=null)
-            {
-                //lines.add(line);
-                String Words[]= line.split(" ");
-                Viterbi_Algorithm2(Words);
-               
+            List<String> lines = new ArrayList<String>();
+            try {
+                BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(fileName)));
+                String line=null;
+                
+                
+                while((line=br.readLine())!=null)
+                {
+                    lines.add(line);
+                    //String Words[]= line.split(" ");
+                    //Viterbi_Algorithm2(Words);
+                    
+                }
+                
+            } catch (FileNotFoundException ex) {
+                Logger.getLogger(Viterbi.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (IOException ex) {
+                Logger.getLogger(Viterbi.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            int i=0;
+            int setC = 0;
+            System.out.println("total sentences in file "+ lines.size());
+            ExecutorService threadPool = Executors.newFixedThreadPool(lines.size()/perThread);
+            for(String l : lines){
+                
+                if(threadSet.size() < perThread){
+                    
+                    threadSet.add(l);
+                    
+                }else{
+                    
+                    ArrayList<String> tmpCopy = new ArrayList<String>();
+                    tmpCopy.addAll(threadSet);
+                    threadPool.execute(new Thread(new Viterbi(i,tmpCopy)));
+                    i++;
+                    //System.out.println(threadSet);
+                    //setOfSets.add(tmpCopy);
+                    
+                    threadSet.clear();
+                    threadSet.add(l);
+                    
+                }
             }
             
-        } catch (FileNotFoundException ex) {
-            Logger.getLogger(Viterbi.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
-            Logger.getLogger(Viterbi.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        
-         
-        for(String line : lines){
-            String Words[] = line.split(" ");
+            ArrayList<String> tmpCopy = new ArrayList<String>();
+            tmpCopy.addAll(threadSet);
+            threadPool.execute(new Thread(new Viterbi(i,tmpCopy)));
+                    
+            threadPool.shutdown();
+            // then wait for it to complete
+
+            threadPool.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+            System.out.println("completed");
             
-            Viterbi_Algorithm2(Words);
+            //System.out.println(setOfSets);
+            System.out.println(i+"  "+pos_output.size());
+            Map<Integer,String> allOutputs = new TreeMap<Integer,String>(pos_output);
+            Iterator outIterate = allOutputs.entrySet().iterator();
+            while(outIterate.hasNext())
+            {
+                Map.Entry me = (Map.Entry)outIterate.next();
+                output.write((String)me.getValue());
+            }
+        } catch (InterruptedException ex) {
+            Logger.getLogger(Viterbi.class.getName()).log(Level.SEVERE, null, ex);
         }
-        output.append(bigOut);
-        
     }
     
-    
-    
-    void Viterbi_Algorithm(String[] Words)
-    {
-        
-       HashMap<String,Double> prob = new HashMap<String,Double>();
-       
-       tree root= new tree(".",null);
-       tree present=root;
-       String history = ".";
-       //printTrans();
-       Iterator it=TagSet.entrySet().iterator();
-       while(it.hasNext())
-       {
-            Map.Entry rowPair = (Map.Entry)it.next();
-            String tagName = (String)rowPair.getKey();
-            double tagProb ;
-            //System.out.println("tag Name "+"._"+tagName);
-            tagProb=TransistionMatrix.containsKey("._"+tagName)?(double)TransistionMatrix.get("._"+tagName):(double)0;
-            prob.put(tagName, tagProb);
-            //System.out.println(tagName+"    "+ tagProb);
-            tree temp=new tree(tagName,present);
-       }
-       
-       
-    }
     
     
     void Viterbi_Algorithm2(String[] Words) throws IOException
@@ -151,8 +194,8 @@ public class Viterbi implements Runnable {
         {
             Map.Entry tagPair = (Map.Entry)it.next();
             String tagName = (String)tagPair.getKey();
-            double currentProb=TransistionMatrix.containsKey(prev+"_"+tagName)?(double)TransistionMatrix.get(prev+"_"+tagName):(double)0.000000001;
-            double tempProb=tagProb.containsKey(tagName)?(double)tagProb.get(tagName):(double)0;
+            double currentProb=TransistionMatrix.containsKey(prev+"_"+tagName)?(double)TransistionMatrix.get(prev+"_"+tagName):(double)0.0000000000000000000000000001;
+            double tempProb=tagProb.containsKey(tagName)?(double)tagProb.get(tagName):(double)0.0000000000000000000000000001;
             
             if(currentProb>tempProb)
             {
@@ -188,7 +231,7 @@ public class Viterbi implements Runnable {
                 String parentTag= (String)parentTree.getKey();
                 tree parentNode = (tree) parentTree.getValue();
                 double parentProb = parentNode.probability;
-                double emissionProb = EmissionMatrix.containsKey(word+"_"+parentTag)?(double) EmissionMatrix.get(word+"_"+parentTag):(double) 0;
+                double emissionProb = EmissionMatrix.containsKey(word+"_"+parentTag)?(double) EmissionMatrix.get(word+"_"+parentTag):(double) 0.0000000000000000000000000001;
                 
                 if(knownWord==false)
                     emissionProb=1;  
@@ -200,7 +243,7 @@ public class Viterbi implements Runnable {
                     Map.Entry tagPair = (Map.Entry) tagIterator.next();
                     String tagName = (String) tagPair.getKey();
                     double presentProb = tagProb.containsKey(tagName)?tagProb.get(tagName):(double)0;
-                    double transmissionProb = TransistionMatrix.containsKey(parentTag+"_"+tagName)?(double)TransistionMatrix.get(parentTag+"_"+tagName):0.00000001;
+                    double transmissionProb = TransistionMatrix.containsKey(parentTag+"_"+tagName)?(double)TransistionMatrix.get(parentTag+"_"+tagName):0.0000000000000000000000000001;
                     
                     double probability = parentProb * emissionProb * transmissionProb * 1000;
             //        System.out.println(word+" --- "+parentTag+"_"+tagName+"  -> "+emissionProb+"  "+transmissionProb);
@@ -255,13 +298,18 @@ public class Viterbi implements Runnable {
             
         }else {
             tags.pop();
+            StringBuilder out= new StringBuilder() ;
             for(int i=0;i<Words.length;i++)
             {
+                //out.append(Words[i]+"_"+tags.pop()+" ");
                 bigOut.append(Words[i]+"_"+tags.pop()+" ");
                // String out=Words[i]+"_"+tags.pop()+" ";
         //    System.out.print(out);
                 //output.write(out);
+                
              }
+           // System.out.println(id);
+            //pos_output.put(this.id,out.toString());
         }
     }
     

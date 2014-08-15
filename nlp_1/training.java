@@ -130,7 +130,7 @@ public class training {
             
             if(goodTuring){
                 Map.Entry pair, pair2;
-                String tag1,tag2;
+                String tag1,tag2,word;
             
                 Iterator tag1it = TagSet.entrySet().iterator();
                 
@@ -149,6 +149,24 @@ public class training {
                         }
                     }
                 }
+                /*
+                tag1it = TagSet.entrySet().iterator();
+                
+                while(tag1it.hasNext()){
+                    pair = (Map.Entry) tag1it.next();
+                    tag1 = (String)pair.getKey();
+                    
+                    Iterator wordit = wordSet.entrySet().iterator();
+                    
+                    while(wordit.hasNext()){
+                        pair2 = (Map.Entry) wordit.next();
+                        word = (String)pair2.getKey();
+                        
+                        if(!wordCount.containsKey(word+"_"+tag1)){
+                            wordCount.put(word+"_"+tag1, 0);
+                        }
+                    }
+                }*/
             }
             
             vocab = wordSet.size();
@@ -218,17 +236,17 @@ public class training {
                     backoff = transitionBackoff.get(colnTag);
                     singletons = transitionSingletons.get(rowTag);
                  
-                    double N = foff((double)count, rowTag);
-                    double Nplus = foff((double)(count+1),rowTag);
+                    double N = foffT((double)count, rowTag);
+                    double Nplus = foffT((double)(count+1),rowTag);
                         
                     if(goodTuring && Nplus!=0){
                         f = new Double( ( ( (double)count + 1 )/(double)rowValue ) * (Nplus/N) );
                     }else {
                         if(count!=0){
                             f=new Double( ((double)count + ( singletons*backoff*oneCount ))/ ( (double)rowValue + (singletons*oneCount ) ) );
-                        }/*else{
+                        }else{
                             f=new Double( ((double)count + 1 )/ ( (double)rowValue + vocab ) );
-                        }*/
+                        }
                     }
                     
                     if(f==0){
@@ -294,7 +312,16 @@ public class training {
                 backoff = emissionBackoff.get(rowTag); // actually fetching by word. misleading variable name
                 singletons = emissionSingletons.get(tagName);
                 
-                double count=wordCount.containsKey(rowTag+"_"+tagName)?( (double)wordCount.get(rowTag+"_"+tagName) + (singletons*backoff*oneCount) )/ ( (double)TagSet.get(tagName) + (singletons*oneCount) ):(double)0;
+                double count = wordCount.containsKey(rowTag+"_"+tagName)? (double)wordCount.get(rowTag+"_"+tagName):0.0;
+                //double N = foffW(count,tagName);
+                //double Nplus = foffW(count+1,tagName);
+                /*
+                if(goodTuring && Nplus!=0){
+                    count = ( (count+1)/(double)TagSet.get(tagName) ) * (Nplus/N);
+                }
+                else{*/
+                    count=( count + (singletons*backoff*oneCount) )/ ( (double)TagSet.get(tagName) + (singletons*oneCount) );
+                //}
                 bw.write(","+count);
                 
                 
@@ -379,8 +406,14 @@ public class training {
         }
     }
     
-    double foff(double n, String tag){
-        int fof = 0;
+    double foffT(double n, String tag){
+        
+        double fof = 0;
+        
+        if(!goodTuring){
+            return 0;
+        }
+        
         Iterator tagIterator = TagSet.entrySet().iterator();
         
         while(tagIterator.hasNext()){
@@ -388,6 +421,27 @@ public class training {
             String tag2 = (String)pair.getKey();
             
             if(TagTransitionCount.get(tag+"_"+tag2) == n){
+               fof++; 
+            }
+        }
+        
+        return fof;
+    }
+    
+    double foffW(double n, String tag){
+        double fof = 0;
+        
+        if(!goodTuring){
+            return 0;
+        }
+        
+        Iterator wordIterator = wordSet.entrySet().iterator();
+        
+        while(wordIterator.hasNext()){
+            Map.Entry pair = (Map.Entry) wordIterator.next();
+            String word = (String)pair.getKey();
+            
+            if(wordCount.get(word+"_"+tag) == n){
                fof++; 
             }
         }

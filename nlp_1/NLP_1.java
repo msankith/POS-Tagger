@@ -28,7 +28,7 @@ public class NLP_1 {
             // TODO code application logic here
             training data=new training("/home/sanjeevmk/NetBeansProjects/PosTagger/src/nlp_1/input/train5.txt");
             data.parseFile();
-            out = new BufferedWriter(new FileWriter("/home/sanjeevmk/NetBeansProjects/PosTagger/src/nlp_1/input/output5_goodT2.txt"));
+            out = new BufferedWriter(new FileWriter("/home/sanjeevmk/NetBeansProjects/PosTagger/src/nlp_1/input/output5_goodT2_1.txt"));
             Viterbi algo= new Viterbi("/home/sanjeevmk/NetBeansProjects/PosTagger/src/nlp_1/input/test5.txt", data,out);
             algo.parseFile();
             
