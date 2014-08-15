@@ -14,6 +14,7 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -25,7 +26,7 @@ import java.util.logging.Logger;
  *
  * @author msankith
  */
-public class training {
+public class training implements Serializable {
     
     File Corpus;
     public HashMap<String,Integer> TagSet,TagTransitionCount,wordCount, transitionSingletons, emissionSingletons;
@@ -36,7 +37,7 @@ public class training {
     double total;
     double vocab;
     int oneCount = 0;
-    boolean goodTuring = true;
+    boolean goodTuring = false;
     
     training(String Corpus){
         
@@ -77,6 +78,7 @@ public class training {
     void parseFile()
     {
         int singleCount;
+        
         
         try {
             BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(Corpus)));
@@ -213,14 +215,14 @@ public class training {
     {
         double backoff;
         int singletons;
-        File file = new File("Transistion.csv");
+        File file = new File("/home/samkit/workspace/nlp_1/src/nlp_1/output/Transition.csv");
             
         if (!file.exists()) {
             file.delete();
             file.createNewFile();
-	}
+        }
             
-        FileWriter fw = new FileWriter(file.getAbsoluteFile());
+    FileWriter fw = new FileWriter(file.getAbsoluteFile());
 	BufferedWriter bw = new BufferedWriter(fw);
         
         Iterator row = TagSet.entrySet().iterator();
@@ -278,7 +280,8 @@ public class training {
                     }
                     
                     if(f!=0){
-                        TransistionProbabilty.put(rowTag+"_"+colnTag,f);
+                    	//f=Math.log10(f);
+                        TransistionProbabilty.put(rowTag+"_"+colnTag, f);
                     }
                 //    System.out.println(rowTag+" _ "+colnTag +"  =  "+count);
                     total+=count;
@@ -295,18 +298,19 @@ public class training {
     
     void getEmissionProbability() throws IOException
     {
-        File file = new File("Emission.csv");
+        File file = new File("/home/samkit/workspace/nlp_1/src/nlp_1/output/Emission.csv");
         double backoff;
         int singletons;
         
         if (!file.exists()) {
             file.delete();
             file.createNewFile();
-	}
+        }
+        
         System.out.println("Unique word count "+ wordSet.size());
             
         FileWriter fw = new FileWriter(file.getAbsoluteFile());
-	BufferedWriter bw = new BufferedWriter(fw);
+        BufferedWriter bw = new BufferedWriter(fw);
         
         
         Iterator word = wordSet.entrySet().iterator();
@@ -345,8 +349,9 @@ public class training {
                 }
                 else{*/
                     count=( count + (singletons*backoff*oneCount) )/ ( (double)TagSet.get(tagName) + (singletons*oneCount) );
+                    //count=Math.log10(count);
                 //}
-                bw.write(","+count);
+                //bw.write(","+count);
                 
                 
                 if(count!=0)
