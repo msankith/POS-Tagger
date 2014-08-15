@@ -7,6 +7,7 @@
 package nlp_1;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -28,6 +29,8 @@ public class NLP_1 {
             // TODO code application logic here
             training data=new training("/home/sanjeevmk/NetBeansProjects/PosTagger/src/nlp_1/input/train5.txt");
             data.parseFile();
+            data.parseUnknownFile(new File("/home/sanjeevmk/NetBeansProjects/PosTagger/src/nlp_1/input/unknownprobs.csv"));
+            
             out = new BufferedWriter(new FileWriter("/home/sanjeevmk/NetBeansProjects/PosTagger/src/nlp_1/input/output5_goodT2_1.txt"));
             Viterbi algo= new Viterbi("/home/sanjeevmk/NetBeansProjects/PosTagger/src/nlp_1/input/test5.txt", data,out);
             algo.parseFile();

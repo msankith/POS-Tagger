@@ -102,8 +102,27 @@ public class Viterbi implements Runnable{
         this.threadSet = lines;
     }
     
+ 	   
+    public double getEmissionProb(String w, String pt, boolean known){
+    	if(!known){
+    		return (double)1;
+    	}
+    	String key = w+"_"+pt;
+    	if(EmissionMatrix.containsKey(key)){
+    		return (double) EmissionMatrix.get(key);
+    	}
+    	return (double) 0.00000001;
+    }
     
-    
+    public double getTransitionProb(String parentTag, String tagName){
+    	
+    	String key = parentTag+"_"+tagName;
+    	if(TransistionMatrix.containsKey(key)){
+    		return (double)TransistionMatrix.get(key);
+    	}
+    	return 0.00000001;
+    }
+
     void parseFile() throws IOException
     {
         try {
@@ -194,7 +213,7 @@ public class Viterbi implements Runnable{
         {
             Map.Entry tagPair = (Map.Entry)it.next();
             String tagName = (String)tagPair.getKey();
-            double currentProb=TransistionMatrix.containsKey(prev+"_"+tagName)?(double)TransistionMatrix.get(prev+"_"+tagName):(double)0.0000000000000000000000000001;
+            double currentProb=getTransitionProb(prev,tagName);
             double tempProb=tagProb.containsKey(tagName)?(double)tagProb.get(tagName):(double)0.0000000000000000000000000001;
             
             if(currentProb>tempProb)
@@ -231,10 +250,8 @@ public class Viterbi implements Runnable{
                 String parentTag= (String)parentTree.getKey();
                 tree parentNode = (tree) parentTree.getValue();
                 double parentProb = parentNode.probability;
-                double emissionProb = EmissionMatrix.containsKey(word+"_"+parentTag)?(double) EmissionMatrix.get(word+"_"+parentTag):(double) 0.0000000000000000000000000001;
-                
-                if(knownWord==false)
-                    emissionProb=1;  
+                double emissionProb = getEmissionProb(word,parentTag,knownWord);
+                 
                   
                 Iterator tagIterator = TagSet.entrySet().iterator();
                 //tagProb.clear();//to clear prev prob
@@ -243,7 +260,7 @@ public class Viterbi implements Runnable{
                     Map.Entry tagPair = (Map.Entry) tagIterator.next();
                     String tagName = (String) tagPair.getKey();
                     double presentProb = tagProb.containsKey(tagName)?tagProb.get(tagName):(double)0;
-                    double transmissionProb = TransistionMatrix.containsKey(parentTag+"_"+tagName)?(double)TransistionMatrix.get(parentTag+"_"+tagName):0.0000000000000000000000000001;
+                    double transmissionProb = getTransitionProb(parentTag,tagName);
                     
                     double probability = parentProb * emissionProb * transmissionProb * 1000;
             //        System.out.println(word+" --- "+parentTag+"_"+tagName+"  -> "+emissionProb+"  "+transmissionProb);

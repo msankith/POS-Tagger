@@ -17,6 +17,7 @@ import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -29,6 +30,8 @@ public class training {
     File Corpus;
     public HashMap<String,Integer> TagSet,TagTransitionCount,wordCount, transitionSingletons, emissionSingletons;
     public HashMap<String,Double> TransistionProbabilty,wordProbability, transitionBackoff, emissionBackoff;
+    public static HashMap<String,Double> unknownProb;
+    
     HashMap<String,Integer> wordSet;
     double total;
     double vocab;
@@ -47,9 +50,30 @@ public class training {
         wordCount = new HashMap<String,Integer>();
         wordSet=new HashMap<String,Integer>();
         transitionSingletons = new HashMap<String,Integer>();
-        emissionSingletons = new HashMap<String,Integer>();   
+        emissionSingletons = new HashMap<String,Integer>();
+        unknownProb = new HashMap<String,Double>();
     }
    
+    void parseUnknownFile(File unk) throws IOException{
+        String tag;
+        double prob;
+        
+        try {
+            BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(unk)));
+            String line = null;
+            
+            while((line=br.readLine())!=null){
+                tag = line.split("\\t")[0];
+                prob = Double.parseDouble(line.split("\\t")[1]);
+                
+                unknownProb.put(tag, prob);
+            }
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(training.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+    }
+    
     void parseFile()
     {
         int singleCount;
