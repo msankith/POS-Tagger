@@ -16,7 +16,6 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 import java.util.logging.Level;
@@ -28,7 +27,6 @@ import java.util.logging.Logger;
  */
 public class Viterbi {
 
-    StringBuilder bigOut = new StringBuilder();
     
     class tree {
         String tag;
@@ -68,38 +66,23 @@ public class Viterbi {
         output=out;
     }
     
-    void parseFile() throws IOException
+    void parseFile()
     {
-        List<String> lines = new ArrayList<String>();
-        
         try {
             BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(fileName)));
             String line=null;
            
-            
             while((line=br.readLine())!=null)
             {
-                //lines.add(line);
                 String Words[]= line.split(" ");
                 Viterbi_Algorithm2(Words);
-               
             }
-            
         } catch (FileNotFoundException ex) {
             Logger.getLogger(Viterbi.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
             Logger.getLogger(Viterbi.class.getName()).log(Level.SEVERE, null, ex);
         }
-        
-         
-        for(String line : lines){
-            String Words[] = line.split(" ");
             
-            Viterbi_Algorithm2(Words);
-            
-        }
-        output.append(bigOut);
-        
     }
     
     
@@ -119,10 +102,10 @@ public class Viterbi {
             Map.Entry rowPair = (Map.Entry)it.next();
             String tagName = (String)rowPair.getKey();
             double tagProb ;
-            //System.out.println("tag Name "+"._"+tagName);
+            System.out.println("tag Name "+"._"+tagName);
             tagProb=TransistionMatrix.containsKey("._"+tagName)?(double)TransistionMatrix.get("._"+tagName):(double)0;
             prob.put(tagName, tagProb);
-            //System.out.println(tagName+"    "+ tagProb);
+            System.out.println(tagName+"    "+ tagProb);
             tree temp=new tree(tagName,present);
        }
        
@@ -233,7 +216,7 @@ public class Viterbi {
         tree node = level2Tree.get(maxTag);
         
         Stack<String> tags = new Stack<String>();
-            
+        
         //ArrayList<String> tags = new ArrayList<String>();
         while(node!=null)
         {
@@ -257,15 +240,14 @@ public class Viterbi {
             tags.pop();
             for(int i=0;i<Words.length;i++)
             {
-                bigOut.append(Words[i]+"_"+tags.pop()+" ");
-               // String out=Words[i]+"_"+tags.pop()+" ";
+                String out=Words[i]+"_"+tags.pop()+" ";
         //    System.out.print(out);
-                //output.write(out);
+                 output.write(out);
              }
         }
        // output.write("\n");
             
-       
+        
     }
     
     void printTrans()
@@ -279,7 +261,7 @@ public class Viterbi {
             Map.Entry rowPair = (Map.Entry)it.next();
             String tagName=(String)rowPair.getKey();
             
-           // System.out.println(tagName+"      "+rowPair.getValue());
+            System.out.println(tagName+"      "+rowPair.getValue());
         }
     }
     
